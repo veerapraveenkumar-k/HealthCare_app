@@ -14,40 +14,6 @@ require('dotenv').config()
 
 const router = express.Router()
 
-router.post('/login', async (req, res) => {
-    try {
-        const {email, password} = await req.body
-        const user = await User.findOne({
-            $and: [
-                {email: email},
-                {role: 'Admin'}
-            ]
-        })
-        if(user != undefined){
-            const isPassCorrect = await bcrypt.compare(password, user.password)
-            if(isPassCorrect){
-                const payLoad = {
-                    userId: user.user_id,
-                    role: user.role
-                }
-                const jwtToken = jwt.sign(payLoad, process.env.JWT_SECRECT_KEY)
-                res.status(200)
-                res.json({jwt_token: jwtToken})
-            } else {
-                res.status(400)
-                res.json({error_msg: "The email and password doesn't match"})
-            }
-        } else {
-            res.status(404)
-            res.json({error_msg: 'Invalid email address'})
-        }
-    } catch (err){
-        res.status(400)
-        res.json({
-            error_msg: 'Login Failed'
-        })
-    }
-})
 
 router.post('/create-profile', AuthorizationFunction, async (req, res) => {
     const userId = await req.userId

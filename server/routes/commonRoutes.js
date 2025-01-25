@@ -7,22 +7,49 @@ const Patient = require('../models/patientSchema')
 const Doctor = require('../models/doctorsSchema')
 const Apointment = require('../models/appointmentSchema')
 const Verification = require('../models/verificationSchema')
-const nodemailer = require("nodemailer");
+const nodemailer = require("nodemailer")
+const jwt = require('jsonwebtoken')
 const {v4: uuidV4}  = require('uuid')
 require("dotenv").config();
 
 
 const router = express.Router()
 
-router.post('/create-account', async (req, res) => {
+router.post('/login', async (req, res) => {
     try {
         const {email, password} = await req.body
-        const user = await User.findOne({
-            $and : [
-                {email: email},
-                {role: 'Patient'}
-            ]
+        const user = await User.findOne({email: email})
+        if(user != undefined){
+            const isPassCorrect = await bcrypt.compare(password, user.password)
+            if(isPassCorrect){
+                const payLoad = {
+                    userId: user.user_id,
+                    role: user.role
+                }
+                const jwtToken = jwt.sign(payLoad, process.env.JWT_SECRECT_KEY)
+                console.log(payLoad)
+                res.status(200)
+                res.json({jwt_token: jwtToken})
+            } else {
+                res.status(400)
+                res.json({error_msg: "The email and password doesn't match"})
+            }
+        } else {
+            res.status(404)
+            res.json({error_msg: 'Invalid email address'})
+        }
+    } catch (err){
+        res.status(400)
+        res.json({
+            error_msg: 'Login Failed'
         })
+    }
+})
+
+router.post('/create-account', async (req, res) => {
+    try {
+        const {email, password, role} = await req.body
+        const user = await User.findOne({email: email})
         if(user != undefined){
             res.status(400)
             res.json({error_msg: 'This email already exist'})
@@ -34,7 +61,7 @@ router.post('/create-account', async (req, res) => {
                     user_id: uuidV4(),
                     email: email,
                     password: hashedpass,
-                    role: 'Patient'
+                    role: role
                 })
                 await newUser.save()
                 res.status(200)
