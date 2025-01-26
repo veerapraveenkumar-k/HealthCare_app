@@ -15,7 +15,7 @@ const app = express()
 app.use(express.json())
 app.use(bodyParser.json())
 app.use(cors({
-    origin: 'https://veerahealthcare.netlify.app/'
+    origin: 'https://veerahealthcare.netlify.app'
   }))
 
 app.use('/api', commonRouter)
